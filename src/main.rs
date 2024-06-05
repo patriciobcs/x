@@ -11,12 +11,8 @@ async fn main() {
             r.with_chain("rococo-local")
                 .with_default_command("polkadot")
                 .with_default_args(vec!["-lparachain=debug".into()])
-                .with_node(|node| {
-                    node.with_name("polkadot")
-                })
-                .with_node(|node| {
-                    node.with_name("polkadot2")
-                })
+                .with_node(|node| node.with_name("polkadot"))
+                .with_node(|node| node.with_name("polkadot2"))
         })
         .with_parachain(|p| {
             p.with_id(100)
@@ -41,29 +37,33 @@ async fn main() {
         .build()
         .unwrap()
         .spawn_native()
-        .await.unwrap();
+        .await
+        .unwrap();
 
-        let mut client = None;
-        if let Ok(node) = config.get_node("asset-hub") {
-            while let Err(_) = node.client::<subxt::PolkadotConfig>().await {
-                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-            }
-
-            client = node.client::<subxt::PolkadotConfig>().await.ok();
+    let mut client = None;
+    if let Ok(node) = config.get_node("asset-hub") {
+        while let Err(_) = node.client::<subxt::PolkadotConfig>().await {
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
-        let client = client.unwrap();
 
-        client
-            .tx()
-            .sign_and_submit_then_watch_default(
-                &statemint::tx()
+        client = node.client::<subxt::PolkadotConfig>().await.ok();
+    }
+    let client = client.unwrap();
+
+    client
+        .tx()
+        .sign_and_submit_then_watch_default(
+            &statemint::tx()
                 .uniques()
                 .create(1, subxt_signer::sr25519::dev::alice().public_key().into()),
-                &subxt_signer::sr25519::dev::alice())
-            .await.unwrap()
-            .wait_for_finalized_success()
-            .await.unwrap();
+            &subxt_signer::sr25519::dev::alice(),
+        )
+        .await
+        .unwrap()
+        .wait_for_finalized_success()
+        .await
+        .unwrap();
 
-        println!("Transaction finalized");
-        loop {}
+    println!("Transaction finalized");
+    loop {}
 }
