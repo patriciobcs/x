@@ -13,9 +13,9 @@ async fn main() {
                 .with_default_args(vec!["-lparachain=debug".into()])
                 .with_node(|node| {
                     node.with_name("polkadot")
-                    .with_args(vec![
-                        "--alice".into(),
-                    ])
+                })
+                .with_node(|node| {
+                    node.with_name("polkadot2")
                 })
         })
         .with_parachain(|p| {
@@ -64,5 +64,6 @@ async fn main() {
             .wait_for_finalized_success()
             .await.unwrap();
 
-    loop { }
+        println!("Transaction finalized");
+        loop {}
 }
